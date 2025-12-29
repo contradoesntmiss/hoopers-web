@@ -1,42 +1,182 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Hoopers</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        background: #0f0f0f;
-        color: #ffffff;
-        padding: 20px;
-        max-width: 600px;
-        margin: auto;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <title>Hoopers</title>
 
-      input, button {
-        padding: 10px;
-        margin: 6px 0;
-        width: 100%;
-        border-radius: 6px;
-        border: none;
-      }
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
-      button {
-        background: #ffffff;
-        color: #000;
-        cursor: pointer;
-        font-weight: bold;
-      }
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f0f0f;
+      color: #ffffff;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+    }
 
-      .hidden {
-        display: none;
-      }
-    </style>
-  </head>
+    h1 {
+      text-align: center;
+    }
 
-  <body>
-    <h1>Hoopers</h1>
+    input, button {
+      padding: 10px;
+      margin: 6px 0;
+      width: 100%;
+      border-radius: 6px;
+      border: none;
+    }
 
-    <div id="auth">
-      <h3>Sign up</h3>
-      <input id="s
+    button {
+      background: #ffffff;
+      color: #000;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .card {
+      padding: 12px;
+      margin-bottom: 12px;
+      background: #161616;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Hoopers</h1>
+
+  <!-- AUTH -->
+  <div id="auth">
+    <h3>Sign up</h3>
+    <input id="signup-email" type="email" placeholder="Email" />
+    <input id="signup-password" type="password" placeholder="Password" />
+    <button id="signup-btn">Sign up</button>
+
+    <h3>Log in</h3>
+    <input id="login-email" type="email" placeholder="Email" />
+    <input id="login-password" type="password" placeholder="Password" />
+    <button id="login-btn">Log in</button>
+  </div>
+
+  <!-- APP -->
+  <div id="app" class="hidden">
+    <h3>Upcoming Games</h3>
+    <div id="games"></div>
+    <button id="logout">Log out</button>
+  </div>
+
+<script>
+  // -----------------------------
+  // SUPABASE SETUP
+  // -----------------------------
+  const supabaseUrl = "YOUR_SUPABASE_URL";
+  const supabaseKey = "YOUR_SUPABASE_ANON_KEY";
+  const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+  // -----------------------------
+  // AUTH HANDLERS
+  // -----------------------------
+  document.getElementById("signup-btn").onclick = async () => {
+    const email = document.getElementById("signup-email").value;
+    const password = document.getElementById("signup-password").value;
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password
+    });
+
+    if (error) alert(error.message);
+    else alert("Check your email to confirm.");
+  };
+
+  document.getElementById("login-btn").onclick = async () => {
+    const email = document.getElementById("login-email").value;
+    const password = document.getElementById("login-password").value;
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) alert(error.message);
+  };
+
+  document.getElementById("logout").onclick = async () => {
+    await supabase.auth.signOut();
+  };
+
+  // -----------------------------
+  // AUTH STATE LISTENER
+  // -----------------------------
+  supabase.auth.onAuthStateChange((event, session) => {
+    const auth = document.getElementById("auth");
+    const app = document.getElementById("app");
+
+    if (session) {
+      auth.classList.add("hidden");
+      app.classList.remove("hidden");
+      loadGames();
+    } else {
+      auth.classList.remove("hidden");
+      app.classList.add("hidden");
+    }
+  });
+
+  // -----------------------------
+  // LOAD NBA GAMES
+  // -----------------------------
+  async function loadGames() {
+    const { data, error } = await supabase
+      .from("games")
+      .select(`
+        id,
+        start_time,
+        home_odds,
+        away_odds,
+        home_team:home_team_id ( name, primary_color ),
+        away_team:away_team_id ( name, primary_color )
+      `)
+      .order("start_time");
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    const container = document.getElementById("games");
+    container.innerHTML = "";
+
+    data.forEach(game => {
+      const div = document.createElement("div");
+      div.className = "card";
+
+      div.innerHTML = `
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="width:18px;height:26px;background:${game.home_team.primary_color};border-radius:3px"></span>
+          <strong>${game.home_team.name}</strong>
+          vs
+          <strong>${game.away_team.name}</strong>
+          <span style="width:18px;height:26px;background:${game.away_team.primary_color};border-radius:3px"></span>
+        </div>
+        <div style="font-size:12px;color:#aaa;margin-top:6px">
+          ${new Date(game.start_time).toLocaleString()}
+        </div>
+        <div style="margin-top:6px">
+          Odds: ${game.home_odds} / ${game.away_odds}
+        </div>
+      `;
+
+      container.appendChild(div);
+    });
+  }
+</script>
+
+</body>
+</html>
