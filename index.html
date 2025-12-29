@@ -3,10 +3,75 @@
   <head>
     <meta charset="UTF-8" />
     <title>Hoopers</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #0f0f0f;
+        color: #ffffff;
+        padding: 20px;
+      }
+
+      .team {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+        padding: 10px;
+        border-radius: 6px;
+        background: #1a1a1a;
+      }
+
+      .jersey {
+        width: 24px;
+        height: 32px;
+        margin-right: 12px;
+        border-radius: 4px;
+      }
+    </style>
   </head>
+
   <body>
-    <h1>Hoopers Prototype</h1>
-    <p>If you can see this, the frontend works.</p>
+    <h1>Hoopers — NBA Teams</h1>
+    <div id="teams"></div>
+
+    <script type="module">
+      import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+      const SUPABASE_URL = "https://cxxvbnxhinetclfwrkbv.supabase.co";
+      const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4eHZibnhoaW5ldGNsZndya2J2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMTcwNDAsImV4cCI6MjA4MjU5MzA0MH0.mcShjpKLY0DKR7eyQheHQnf0i_BsP-k6G6nKQpMKsoA";
+
+      const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      async function loadTeams() {
+        const { data, error } = await supabase
+          .from("teams")
+          .select("*")
+          .order("name");
+
+        if (error) {
+          console.error(error);
+          return;
+        }
+
+        const container = document.getElementById("teams");
+
+        data.forEach((team) => {
+          const el = document.createElement("div");
+          el.className = "team";
+
+          const jersey = document.createElement("div");
+          jersey.className = "jersey";
+          jersey.style.background = team.primary_color;
+
+          const name = document.createElement("div");
+          name.textContent = team.name;
+
+          el.appendChild(jersey);
+          el.appendChild(name);
+          container.appendChild(el);
+        });
+      }
+
+      loadTeams();
+    </script>
   </body>
 </html>
-
