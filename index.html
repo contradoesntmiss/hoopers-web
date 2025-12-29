@@ -4,13 +4,14 @@
   <meta charset="UTF-8" />
   <title>Hoopers</title>
 
+  <!-- Supabase -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #0f0f0f;
-      color: #ffffff;
+      color: #fff;
       padding: 20px;
       max-width: 600px;
       margin: auto;
@@ -21,18 +22,18 @@
     }
 
     input, button {
+      width: 100%;
       padding: 10px;
       margin: 6px 0;
-      width: 100%;
       border-radius: 6px;
       border: none;
     }
 
     button {
-      background: #ffffff;
+      background: #fff;
       color: #000;
-      cursor: pointer;
       font-weight: bold;
+      cursor: pointer;
     }
 
     .hidden {
@@ -40,65 +41,79 @@
     }
 
     .card {
-      padding: 12px;
-      margin-bottom: 12px;
       background: #161616;
+      padding: 12px;
       border-radius: 8px;
+      margin-bottom: 10px;
     }
   </style>
 </head>
 
 <body>
 
-  <h1>Hoopers</h1>
+<h1>Hoopers</h1>
 
-  <!-- AUTH -->
-  <div id="auth">
-    <h3>Sign up</h3>
-    <input id="signup-email" type="email" placeholder="Email" />
-    <input id="signup-password" type="password" placeholder="Password" />
-    <button id="signup-btn">Sign up</button>
+<!-- AUTH -->
+<div id="auth">
+  <h3>Sign Up</h3>
+  <input id="signup-email" placeholder="Email" />
+  <input id="signup-password" type="password" placeholder="Password" />
+  <button id="signup-btn">Sign Up</button>
 
-    <h3>Log in</h3>
-    <input id="login-email" type="email" placeholder="Email" />
-    <input id="login-password" type="password" placeholder="Password" />
-    <button id="login-btn">Log in</button>
-  </div>
+  <h3>Log In</h3>
+  <input id="login-email" placeholder="Email" />
+  <input id="login-password" type="password" placeholder="Password" />
+  <button id="login-btn">Log In</button>
+</div>
 
-  <!-- APP -->
-  <div id="app" class="hidden">
-    <h3>Upcoming Games</h3>
-    <div id="games"></div>
-    <button id="logout">Log out</button>
-  </div>
+<!-- APP -->
+<div id="app" class="hidden">
+  <h3>Upcoming Games</h3>
+  <div id="games"></div>
+  <button id="logout-btn">Log Out</button>
+</div>
 
 <script>
-  // -----------------------------
-  // SUPABASE SETUP
-  // -----------------------------
-  const supabaseUrl = "https://cxxvbnxhinetclfwrkbv.supabase.co";
-  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4eHZibnhoaW5ldGNsZndya2J2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMTcwNDAsImV4cCI6MjA4MjU5MzA0MH0.mcShjpKLY0DKR7eyQheHQnf0i_BsP-k6G6nKQpMKsoA";
-  const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+  // FORCE CONFIRM JS IS RUNNING
+  console.log("JS LOADED");
 
   // -----------------------------
-  // AUTH HANDLERS
+  // SUPABASE INIT
   // -----------------------------
-  document.getElementById("signup-btn").onclick = async () => {
-    const email = document.getElementById("signup-email").value;
-    const password = document.getElementById("signup-password").value;
+  const SUPABASE_URL = "https://cxxvbnxhinetclfwrkbv.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4eHZibnhoaW5ldGNsZndya2J2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMTcwNDAsImV4cCI6MjA4MjU5MzA0MH0.mcShjpKLY0DKR7eyQheHQnf0i_BsP-k6G6nKQpMKsoA";
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password
-    });
+  const supabase = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
+
+  // -----------------------------
+  // BUTTONS (EXPLICIT LISTENERS)
+  // -----------------------------
+  document.getElementById("signup-btn").addEventListener("click", async () => {
+    const email = document.getElementById("signup-email").value.trim();
+    const password = document.getElementById("signup-password").value.trim();
+
+    if (!email || !password) {
+      alert("Enter email and password");
+      return;
+    }
+
+    const { error } = await supabase.auth.signUp({ email, password });
 
     if (error) alert(error.message);
-    else alert("Check your email to confirm.");
-  };
+    else alert("Signup successful. You can log in.");
+  });
 
-  document.getElementById("login-btn").onclick = async () => {
-    const email = document.getElementById("login-email").value;
-    const password = document.getElementById("login-password").value;
+  document.getElementById("login-btn").addEventListener("click", async () => {
+    const email = document.getElementById("login-email").value.trim();
+    const password = document.getElementById("login-password").value.trim();
+
+    if (!email || !password) {
+      alert("Enter email and password");
+      return;
+    }
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -106,14 +121,14 @@
     });
 
     if (error) alert(error.message);
-  };
+  });
 
-  document.getElementById("logout").onclick = async () => {
+  document.getElementById("logout-btn").addEventListener("click", async () => {
     await supabase.auth.signOut();
-  };
+  });
 
   // -----------------------------
-  // AUTH STATE LISTENER
+  // AUTH STATE
   // -----------------------------
   supabase.auth.onAuthStateChange((event, session) => {
     const auth = document.getElementById("auth");
@@ -130,13 +145,12 @@
   });
 
   // -----------------------------
-  // LOAD NBA GAMES
+  // LOAD GAMES
   // -----------------------------
   async function loadGames() {
     const { data, error } = await supabase
       .from("games")
       .select(`
-        id,
         start_time,
         home_odds,
         away_odds,
@@ -158,7 +172,7 @@
       div.className = "card";
 
       div.innerHTML = `
-        <div style="display:flex;align-items:center;gap:8px">
+        <div style="display:flex;gap:8px;align-items:center">
           <span style="width:18px;height:26px;background:${game.home_team.primary_color};border-radius:3px"></span>
           <strong>${game.home_team.name}</strong>
           vs
